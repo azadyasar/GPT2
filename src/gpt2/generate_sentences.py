@@ -18,7 +18,7 @@ class GPT2GenerationSpec(GenerationSpec):
 
     def initialize(self):
         self.vocab = Vocab(tokenizer_path=self.vocab_path)
-        self.tokenizer = Tokenizer(vocab=self.vocab)
+        # self.tokenizer = Tokenizer(vocab=self.vocab)
 
     def construct_model(self) -> nn.Module:
         return Transformer(layers=self.layers, pad_idx=self.vocab.pad_idx,
