@@ -19,7 +19,7 @@ class GPT2EvaluationSpec(EvaluationSpec):
         self.rate = rate
 
     def initialize(self):
-        self.vocab = Vocab(vocab_path=self.vocab_path)
+        self.vocab = Vocab(tokenizer_path=self.vocab_path)
         self.criterion = nn.CrossEntropyLoss(reduction='none')
 
     def prepare_dataset(self) -> Dataset:

@@ -17,7 +17,7 @@ class GPT2GenerationSpec(GenerationSpec):
         self.rate = rate
 
     def initialize(self):
-        self.vocab = Vocab(vocab_path=self.vocab_path)
+        self.vocab = Vocab(tokenizer_path=self.vocab_path)
         self.tokenizer = Tokenizer(vocab=self.vocab)
 
     def construct_model(self) -> nn.Module:
@@ -27,15 +27,12 @@ class GPT2GenerationSpec(GenerationSpec):
                            dropout=0, bidirectional=False)
 
     def encode_context(self, context: str) -> List[int]:
-        tokens = [self.vocab[t] for t in self.tokenizer.encode(context)]
-        tokens = [self.vocab.bos_idx] + tokens
-
-        return tokens
+        return [self.vocab.bos_idx] + self.vocab.encode(context)
 
     def decode_tokens(self, tokens: List[int]) -> str:
         if self.vocab.eos_idx in tokens:
-            tokens = tokens[:tokens.index(self.vocab.eos_idx)+1]
-        return self.tokenizer.decode([self.vocab[t] for t in tokens])
+            tokens = tokens[:tokens.index(self.vocab.eos_idx) + 1]
+        return self.vocab.decode_from_ids(tokens)
 
 
 def generate_sentence_with_gpt2_model(args: argparse.Namespace):
