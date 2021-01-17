@@ -8,14 +8,11 @@ class TokenizedCorpus(Dataset):
                  corpus_path: str,
                  vocab: Vocab,
                  seq_len: int,
-                 corpus_line_len: int,
                  repeat: bool = True):
         self.corpus_fp = open(corpus_path, 'r', encoding='utf-8')
         self.vocab = vocab
         self.seq_len = seq_len
         self.repeat = repeat
-        self.corpus_line_len: corpus_line_len
-        assert seq_len > corpus_line_len
 
     def skip(self, count: int):
         for _ in range(count):
