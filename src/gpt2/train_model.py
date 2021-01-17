@@ -31,7 +31,7 @@ class GPT2TrainingSpec(TrainingSpec):
         self.use_grad_ckpt = use_grad_ckpt
 
     def initialize(self):
-        self.vocab = Vocab(vocab_path=self.vocab_path)
+        self.vocab = Vocab(tokenizer_path=self.vocab_path)
         self.criterion = nn.CrossEntropyLoss(ignore_index=self.vocab.pad_idx,
                                              reduction='mean')
 
