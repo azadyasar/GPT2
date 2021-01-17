@@ -77,7 +77,7 @@ def add_subparser(subparsers: argparse._SubParsersAction):
                        help='number of transformer layers')
     group.add_argument('--heads', default=16, type=int,
                        help='number of multi-heads in attention layer')
-    group.add_argument('--dims', default=1024, type=int,
+    group.add_argument('--dims', default=784, type=int,
                        help='dimension of representation in each layer')
     group.add_argument('--rate', default=4, type=int,
                        help='increase rate of dimensionality in bottleneck')
