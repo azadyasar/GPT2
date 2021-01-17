@@ -1,0 +1,7 @@
+regex
+tqdm
+torch
+numpy
+matplotlib
+youtokentome
+sentencepiece
