@@ -16,7 +16,7 @@ class Recorder(object):
 
     def stamp(self, step: int = 0, lr: float = None):
         if lr is not None:
-            self.metrics['lr'].append((step, LookupError))
+            self.metrics['lr'].append((step, lr))
         
         for name, values in self.batch_metrics.items():
             if name not in self.metrics:
