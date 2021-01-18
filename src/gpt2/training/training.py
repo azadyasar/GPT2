@@ -111,14 +111,14 @@ class Trainer(object):
 
         for step in training_iters:
             # Clear CUDA cache which is used for training.
-            torch.cuda.empty_cache()
+            # torch.cuda.empty_cache()
 
             recorder.record(
                 self._train_step(rank, train_dataset, model, optimizer,
                                  scheduler), scope='train')
 
             # Clear CUDA cache which is used for evaluation.
-            torch.cuda.empty_cache()
+            # torch.cuda.empty_cache()
 
             if (step + 1) % self.config.eval_steps == 0:
                 learning_rate = optimizer.param_groups[0]['lr']
