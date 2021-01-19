@@ -107,7 +107,7 @@ def add_subparser(subparsers: argparse._SubParsersAction):
                        help='evaluation corpus file path')
     group.add_argument('--vocab_path', required=True,
                        help='vocabulary file path')
-    group.add_argument('--is_sp', type=bool,
+    group.add_argument('--is_sp', type=int,
                        help='is tokenizer a sentencepiece model')
 
     group = parser.add_argument_group('Model configurations')

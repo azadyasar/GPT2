@@ -71,7 +71,7 @@ def add_subparser(subparsers: argparse._SubParsersAction):
     group = parser.add_argument_group('Corpus and vocabulary')
     group.add_argument('--eval_corpus', required=True,
                        help='evaluation corpus file path')
-    group.add_argument('--is_sp', type=bool,
+    group.add_argument('--is_sp', type=int,
                        help='is tokenizer a sentencepiece model')
     group.add_argument('--vocab_path', required=True,
                        help='vocabulary file path')

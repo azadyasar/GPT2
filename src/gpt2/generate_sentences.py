@@ -60,7 +60,7 @@ def add_subparser(subparsers: argparse._SubParsersAction):
 
     parser.add_argument('--vocab_path', required=True,
                         help='vocabulary file path')
-    parser.add_argument('--is_sp', type=bool,
+    parser.add_argument('--is_sp', type=int,
                        help='is tokenizer a sentencepiece model')
     parser.add_argument('--model_path', required=True,
                         help='trained GPT-2 model file path')
