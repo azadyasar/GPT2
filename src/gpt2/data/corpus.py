@@ -41,11 +41,15 @@ class TokenizedCorpus(Dataset):
             return {'input': indices[:-1], 'output': indices[1:]}
         
     def _read_n_tokens(self, n: int) -> List[int]:
-        if (self.buffer_pointer + n) > len(self.buffer):
+        if (self.buffer_pointer + n) >= len(self.buffer):
             self._fill_buffer()
         count = 0
         text = ""
         while True:
+            if self.buffer_pointer >= len(self.buffer):
+                self._fill_buffer()
+                text = ""
+                count = 0
             char = self.buffer[self.buffer_pointer]
             self.buffer_pointer += 1
             if char.isspace():
