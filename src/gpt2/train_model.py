@@ -82,7 +82,8 @@ def train_gpt2_model(args: argparse.Namespace):
         vocab_path=args.vocab_path, seq_len=args.seq_len, layers=args.layers,
         heads=args.heads, dims=args.dims, rate=args.rate, dropout=args.dropout,
         base_lr=args.base_lr, wd_rate=args.wd_rate,
-        total_steps=args.total_steps, use_grad_ckpt=args.use_grad_ckpt)
+        total_steps=args.total_steps, use_grad_ckpt=args.use_grad_ckpt,
+        is_sentencepiece=args.is_sp)
     config = TrainConfig(
         batch_train=args.batch_train, batch_eval=args.batch_eval,
         total_steps=args.total_steps, eval_steps=args.eval_steps,
@@ -106,6 +107,8 @@ def add_subparser(subparsers: argparse._SubParsersAction):
                        help='evaluation corpus file path')
     group.add_argument('--vocab_path', required=True,
                        help='vocabulary file path')
+    group.add_argument('--is_sp', type=bool,
+                       help='is tokenizer a sentencepiece model')
 
     group = parser.add_argument_group('Model configurations')
     group.add_argument('--seq_len', default=64, type=int,

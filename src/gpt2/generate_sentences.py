@@ -42,7 +42,7 @@ class GPT2GenerationSpec(GenerationSpec):
 def generate_sentence_with_gpt2_model(args: argparse.Namespace):
     spec = GPT2GenerationSpec(
         vocab_path=args.vocab_path, seq_len=args.seq_len, layers=args.layers,
-        heads=args.heads, dims=args.dims, rate=args.rate)
+        heads=args.heads, dims=args.dims, rate=args.rate, is_sentencepiece=args.is_sp)
     config = GenerateConfig(
         seq_len=args.seq_len, nucleus_prob=args.nucleus_prob,
         use_gpu=args.use_gpu)
@@ -60,6 +60,8 @@ def add_subparser(subparsers: argparse._SubParsersAction):
 
     parser.add_argument('--vocab_path', required=True,
                         help='vocabulary file path')
+    parser.add_argument('--is_sp', type=bool,
+                       help='is tokenizer a sentencepiece model')
     parser.add_argument('--model_path', required=True,
                         help='trained GPT-2 model file path')
 

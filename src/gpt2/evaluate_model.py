@@ -54,7 +54,7 @@ def evaluate_gpt2_model(args: argparse.Namespace):
     spec = GPT2EvaluationSpec(
         eval_corpus=args.eval_corpus, vocab_path=args.vocab_path,
         seq_len=args.seq_len, layers=args.layers, heads=args.heads,
-        dims=args.dims, rate=args.rate)
+        dims=args.dims, rate=args.rate, is_sentencepiece=args.is_sp)
     config = EvaluateConfig(
         batch_eval=args.batch_eval, total_steps=args.total_steps,
         use_gpu=args.use_gpu)
@@ -71,6 +71,8 @@ def add_subparser(subparsers: argparse._SubParsersAction):
     group = parser.add_argument_group('Corpus and vocabulary')
     group.add_argument('--eval_corpus', required=True,
                        help='evaluation corpus file path')
+    group.add_argument('--is_sp', type=bool,
+                       help='is tokenizer a sentencepiece model')
     group.add_argument('--vocab_path', required=True,
                        help='vocabulary file path')
 
