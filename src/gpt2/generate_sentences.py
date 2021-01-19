@@ -42,7 +42,7 @@ class GPT2GenerationSpec(GenerationSpec):
 def generate_sentence_with_gpt2_model(args: argparse.Namespace):
     spec = GPT2GenerationSpec(
         vocab_path=args.vocab_path, seq_len=args.seq_len, layers=args.layers,
-        heads=args.heads, dims=args.dims, rate=args.rate, is_sentencepiece=args.is_sp)
+        heads=args.heads, dims=args.dims, rate=args.rate, is_sentencepiece=args.is_sp == 1)
     config = GenerateConfig(
         seq_len=args.seq_len, nucleus_prob=args.nucleus_prob,
         use_gpu=args.use_gpu)

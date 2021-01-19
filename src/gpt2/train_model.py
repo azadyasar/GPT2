@@ -83,7 +83,7 @@ def train_gpt2_model(args: argparse.Namespace):
         heads=args.heads, dims=args.dims, rate=args.rate, dropout=args.dropout,
         base_lr=args.base_lr, wd_rate=args.wd_rate,
         total_steps=args.total_steps, use_grad_ckpt=args.use_grad_ckpt,
-        is_sentencepiece=args.is_sp)
+        is_sentencepiece=args.is_sp == 1)
     config = TrainConfig(
         batch_train=args.batch_train, batch_eval=args.batch_eval,
         total_steps=args.total_steps, eval_steps=args.eval_steps,
