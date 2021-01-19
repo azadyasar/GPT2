@@ -6,7 +6,7 @@ import torch.nn as nn
 import torch.optim as optim
 from gpt2.utils import fusing
 from gpt2.modeling import Transformer
-from gpt2.data import Dataset, Vocab, TokenizedCorpus
+from gpt2.data import Dataset, VocabSP, VocabYTTM, TokenizedCorpus
 from gpt2.training import TrainConfig, TrainingSpec, Trainer
 from typing import Tuple, Iterator, Dict
 
@@ -15,7 +15,7 @@ class GPT2TrainingSpec(TrainingSpec):
     def __init__(self, train_corpus: str, eval_corpus: str, vocab_path: str,
                  seq_len: int, layers: int, heads: int, dims: int, rate: int,
                  dropout: float, base_lr: float, wd_rate: float,
-                 total_steps: int, use_grad_ckpt: bool):
+                 total_steps: int, use_grad_ckpt: bool, is_sentencepiece: bool = True):
         self.train_corpus = train_corpus
         self.eval_corpus = eval_corpus
         self.vocab_path = vocab_path
@@ -29,9 +29,13 @@ class GPT2TrainingSpec(TrainingSpec):
         self.wd_rate = wd_rate
         self.total_steps = total_steps
         self.use_grad_ckpt = use_grad_ckpt
+        self.is_sentencepiece = is_sentencepiece
 
     def initialize(self):
-        self.vocab = Vocab(tokenizer_path=self.vocab_path)
+        if self.is_sentencepiece:
+            self.vocab = VocabSP(tokenizer_path=self.vocab_path)
+        else:
+            self.vocab = VocabYTTM(tokenizer_path=self.vocab_path)
         self.criterion = nn.CrossEntropyLoss(ignore_index=self.vocab.pad_idx,
                                              reduction='mean')
 

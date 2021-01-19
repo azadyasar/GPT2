@@ -1,6 +1,6 @@
 import argparse
 import torch.nn as nn
-from gpt2.data import Vocab, Tokenizer
+from gpt2.data import VocabSP, VocabYTTM, Tokenizer
 from gpt2.modeling import Transformer
 from gpt2.generation import GenerationSpec, GenerateConfig, Generator
 from typing import List
@@ -8,16 +8,20 @@ from typing import List
 
 class GPT2GenerationSpec(GenerationSpec):
     def __init__(self, vocab_path: str, seq_len: int, layers: int, heads: int,
-                 dims: int, rate: int):
+                 dims: int, rate: int, is_sentencepiece: bool = True):
         self.vocab_path = vocab_path
         self.seq_len = seq_len
         self.layers = layers
         self.heads = heads
         self.dims = dims
         self.rate = rate
+        self.is_sentencepiece = is_sentencepiece
 
     def initialize(self):
-        self.vocab = Vocab(tokenizer_path=self.vocab_path)
+        if self.is_sentencepiece:
+            self.vocab = VocabSP(tokenizer_path=self.vocab_path)
+        else:
+            self.vocab = VocabYTTM(tokenizer_path=self.vocab_path)
         # self.tokenizer = Tokenizer(vocab=self.vocab)
 
     def construct_model(self) -> nn.Module:

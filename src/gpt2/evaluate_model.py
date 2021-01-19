@@ -2,14 +2,14 @@ import argparse
 import torch
 import torch.nn as nn
 from gpt2.modeling import Transformer
-from gpt2.data import Dataset, Vocab, TokenizedCorpus
+from gpt2.data import Dataset, VocabSP, VocabYTTM, TokenizedCorpus
 from gpt2.evaluation import EvaluationSpec, EvaluateConfig, Evaluator
 from typing import Dict
 
 
 class GPT2EvaluationSpec(EvaluationSpec):
     def __init__(self, eval_corpus: str, vocab_path: str, seq_len: int,
-                 layers: int, heads: int, dims: int, rate: int):
+                 layers: int, heads: int, dims: int, rate: int, is_sentencepiece: bool = True):
         self.eval_corpus = eval_corpus
         self.vocab_path = vocab_path
         self.seq_len = seq_len
@@ -17,9 +17,13 @@ class GPT2EvaluationSpec(EvaluationSpec):
         self.heads = heads
         self.dims = dims
         self.rate = rate
+        self.is_sentencepiece = is_sentencepiece
 
     def initialize(self):
-        self.vocab = Vocab(tokenizer_path=self.vocab_path)
+        if self.is_sentencepiece:
+            self.vocab = VocabSP(tokenizer_path=self.vocab_path)
+        else:
+            self.vocab = VocabYTTM(tokenizer_path=self.vocab_path)
         self.criterion = nn.CrossEntropyLoss(reduction='none')
 
     def prepare_dataset(self) -> Dataset:
