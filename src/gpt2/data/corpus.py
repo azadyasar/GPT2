@@ -95,6 +95,8 @@ class TokenizedCorpus(Dataset):
         
     def _fill_buffer_mp(self, char_count: int = 2097152):
         print("Reading")
+        self.tmp_buffer.acquire()
+        self.refill.acquire()
         text = self.corpus_fp.read(char_count)
         if len(text) < char_count:
             print("Consumed all of the corpus.")
@@ -108,7 +110,7 @@ class TokenizedCorpus(Dataset):
         print("Read")
         self.tmp_buffer = self.vocab.encode(text)
         print("Indexed len = ", len(self.tmp_buffer))
-        self.refill.acquire()
+        self.tmp_buffer.release()
         self.refill.value = False
         self.refill.release()
         # time.sleep(0.000001)
