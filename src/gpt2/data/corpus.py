@@ -59,6 +59,7 @@ class TokenizedCorpus(Dataset):
             
         res = self.buffer[self.buffer_pointer : self.buffer_pointer + n]
         self.buffer_pointer += n
+        print("res = ", res)
         return res
         # count = 0
         # text = ""
