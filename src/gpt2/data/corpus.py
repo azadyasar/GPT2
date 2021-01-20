@@ -52,6 +52,7 @@ class TokenizedCorpus(Dataset):
         
     def _read_n_tokens(self, n: int) -> List[int]:
         if (self.buffer_pointer + n) >= len(self.buffer):
+            while self.read_event.is_set(): time.sleep(0.0001)
             self.buffer = self.tmp_buffer
             self.buffer_pointer = 0
             self.read_event.set()
@@ -74,7 +75,7 @@ class TokenizedCorpus(Dataset):
         #             return [int(idx) for idx in text.split()]
         #     text += char
           
-    def _fill_buffer_in_bg(self, char_count: int = 524288):
+    def _fill_buffer_in_bg(self, char_count: int = 2097152):
         while True:
             self.read_event.clear()
             self.read_event.wait(60)
