@@ -1,8 +1,8 @@
 import torch
 import threading
+import time
 from gpt2.data import Dataset, VocabYTTM, VocabSP
 from typing import Dict, Any, List, Optional, Union
-
 
 class TokenizedCorpus(Dataset):
     def __init__(self,
@@ -17,7 +17,12 @@ class TokenizedCorpus(Dataset):
         self.buffer = ""
         self.buffer_pointer = 0
         self.tmp_buffer = ""
-        self._read_in_background()
+        
+        self.refill = True
+        self.refill_lock = threading.Lock()
+        self.t = threading.Thread(target=self._fill_buffer_in_bg)
+        self.t.setDaemon(True)
+        self.t.start()
 
     def skip(self, count: int):
         for _ in range(count):
@@ -46,7 +51,9 @@ class TokenizedCorpus(Dataset):
     def _read_n_tokens(self, n: int) -> List[int]:
         if (self.buffer_pointer + n) >= len(self.buffer):
             self.buffer = self.tmp_buffer
-            self._read_in_background()
+            self.buffer_pointer = 0
+            with self.refill_lock:
+                self.refill = True
             
         res = self.buffer[self.buffer_pointer : self.buffer_pointer + n]
         self.buffer_pointer += n
@@ -65,27 +72,24 @@ class TokenizedCorpus(Dataset):
         #         if count >= n:
         #             return [int(idx) for idx in text.split()]
         #     text += char
-            
-    def _read_in_background(self):
-        self.corpus_reader_thread = threading.Thread(target=self._fill_buffer)
-        self.corpus_reader_thread.setDaemon(True)
-        self.corpus_reader_thread.start()
-        
-    def _fill_buffer(self, char_count: int = 1048576):
-        print("Reading in bg")
-        text = self.corpus_fp.read(char_count)
-        if len(text) < char_count:
-            print("Consumed all of the corpus.")
-            # Raise error when all sequences are read.
-            if not self.repeat:
-                raise StopIteration()
-            print("Rewinding")
-            # Or, reset current tokens and move to the beginning of the corpus.
-            self.corpus_fp.seek(0)
-            self._fill_buffer()
-        print("Encoding")
-        self.tmp_buffer = self.vocab.encode(text)
-        print("Done")
+          
+    def _fill_buffer_in_bg(self, char_count: int = 1048576):
+        while True:
+            if self.refill:
+                text = self.corpus_fp.read(char_count)
+                if len(text) < char_count:
+                    print("Consumed all of the corpus.")
+                    # Raise error when all sequences are read.
+                    if not self.repeat:
+                        raise StopIteration()
+                    print("Rewinding")
+                    # Or, reset current tokens and move to the beginning of the corpus.
+                    self.corpus_fp.seek(0)
+                    continue
+                self.tmp_buffer = self.vocab.encode(text)
+                with self.refill_lock:
+                    self.refill = False
+            time.sleep(0.001)
     
     def fetch(self, batch: Optional[int] = None) -> Dict[str, torch.Tensor]:
         if batch is None:
