@@ -24,6 +24,7 @@ class TokenizedCorpus(Dataset):
         self.t = threading.Thread(target=self._fill_buffer_in_bg)
         self.t.setDaemon(True)
         self.t.start()
+        self.read_event.set()
 
     def skip(self, count: int):
         for _ in range(count):
@@ -59,7 +60,6 @@ class TokenizedCorpus(Dataset):
             
         res = self.buffer[self.buffer_pointer : self.buffer_pointer + n]
         self.buffer_pointer += n
-        print("res = ", res)
         return res
         # count = 0
         # text = ""
