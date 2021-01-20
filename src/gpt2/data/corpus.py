@@ -66,6 +66,7 @@ class TokenizedCorpus(Dataset):
             self.tmp_buffer.acquire()
             self.buffer_pointer = 0
             self.buffer = [self.tmp_buffer[i] for i in range(len(self.tmp_buffer))]
+            self.tmp_buffer.release()
             print("buffer len = ", len(self.buffer))
             p = mp.Process(target=self._fill_buffer_mp)
             p.start()
@@ -95,7 +96,6 @@ class TokenizedCorpus(Dataset):
         
     def _fill_buffer_mp(self, char_count: int = 2097152):
         print("Reading")
-        self.tmp_buffer.acquire()
         self.refill.acquire()
         text = self.corpus_fp.read(char_count)
         if len(text) < char_count:
@@ -110,7 +110,6 @@ class TokenizedCorpus(Dataset):
         print("Read")
         self.tmp_buffer.value = self.vocab.encode(text)
         print("Indexed len = ", len(self.tmp_buffer))
-        self.tmp_buffer.release()
         self.refill.value = False
         self.refill.release()
         # time.sleep(0.000001)
