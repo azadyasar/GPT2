@@ -72,6 +72,7 @@ class TokenizedCorpus(Dataset):
         self.corpus_reader_thread.start()
         
     def _fill_buffer(self, char_count: int = 1048576):
+        print("Reading in bg")
         text = self.corpus_fp.read(char_count)
         if len(text) < char_count:
             print("Consumed all of the corpus.")
@@ -82,8 +83,9 @@ class TokenizedCorpus(Dataset):
             # Or, reset current tokens and move to the beginning of the corpus.
             self.corpus_fp.seek(0)
             self._fill_buffer()
-        
+        print("Encoding")
         self.tmp_buffer = self.vocab.encode(text)
+        print("Done")
     
     def fetch(self, batch: Optional[int] = None) -> Dict[str, torch.Tensor]:
         if batch is None:
