@@ -61,15 +61,13 @@ class TokenizedCorpus(Dataset):
             self.refill.acquire()
             while self.refill.value is True: time.sleep(0.00001)
             self.refill.value = True
-            self.refill.release()
-            
-            self.tmp_buffer.acquire()
+        
             self.buffer_pointer = 0
-            self.buffer = [self.tmp_buffer[i] for i in range(len(self.tmp_buffer))]
-            self.tmp_buffer.release()
+            self.buffer = [self.tmp_buffer[i] for i in range(len(self.tmp_buffer.value))]
             print("buffer len = ", len(self.buffer))
             p = mp.Process(target=self._fill_buffer_mp)
             p.start()
+            self.refill.release()
             # while self.read_event.is_set(): time.sleep(0.0001)
             # self.buffer = self.tmp_buffer
             # self.buffer_pointer = 0
