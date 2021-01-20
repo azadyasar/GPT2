@@ -109,7 +109,7 @@ class TokenizedCorpus(Dataset):
             self._fill_buffer_mp()
         print("Read")
         self.tmp_buffer.value = self.vocab.encode(text)
-        print("Indexed len = ", len(self.tmp_buffer))
+        print("Indexed len = ", len(self.tmp_buffer.value))
         self.refill.value = False
         self.refill.release()
         # time.sleep(0.000001)
