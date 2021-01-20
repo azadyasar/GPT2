@@ -14,7 +14,7 @@ class TokenizedCorpus(Dataset):
         self.vocab = vocab
         self.seq_len = seq_len
         self.repeat = repeat
-        self.buffer = ""
+        self.buffer = []
         self.buffer_pointer = 0
         self.tmp_buffer = ""
         
@@ -51,9 +51,11 @@ class TokenizedCorpus(Dataset):
         
     def _read_n_tokens(self, n: int) -> List[int]:
         if (self.buffer_pointer + n) >= len(self.buffer):
+            print("Asking for data")
             self.buffer = self.tmp_buffer
             self.buffer_pointer = 0
             self.read_event.set()
+            print("Continuing")
             
         res = self.buffer[self.buffer_pointer : self.buffer_pointer + n]
         self.buffer_pointer += n
