@@ -20,6 +20,7 @@ class TokenizedCorpus(Dataset):
         
         self.refill = True
         self.refill_lock = threading.Lock()
+        self.read_event = threading.Event()
         self.t = threading.Thread(target=self._fill_buffer_in_bg)
         self.t.setDaemon(True)
         self.t.start()
@@ -52,8 +53,7 @@ class TokenizedCorpus(Dataset):
         if (self.buffer_pointer + n) >= len(self.buffer):
             self.buffer = self.tmp_buffer
             self.buffer_pointer = 0
-            with self.refill_lock:
-                self.refill = True
+            self.read_event.set()
             
         res = self.buffer[self.buffer_pointer : self.buffer_pointer + n]
         self.buffer_pointer += n
@@ -73,23 +73,24 @@ class TokenizedCorpus(Dataset):
         #             return [int(idx) for idx in text.split()]
         #     text += char
           
-    def _fill_buffer_in_bg(self, char_count: int = 1048576):
+    def _fill_buffer_in_bg(self, char_count: int = 262144):
         while True:
-            if self.refill:
-                text = self.corpus_fp.read(char_count)
-                if len(text) < char_count:
-                    print("Consumed all of the corpus.")
-                    # Raise error when all sequences are read.
-                    if not self.repeat:
-                        raise StopIteration()
-                    print("Rewinding")
-                    # Or, reset current tokens and move to the beginning of the corpus.
-                    self.corpus_fp.seek(0)
-                    continue
-                self.tmp_buffer = self.vocab.encode(text)
-                with self.refill_lock:
-                    self.refill = False
-            time.sleep(0.001)
+            self.read_event.clear()
+            print("Waiting")
+            self.read_event.wait(60)
+            print("Reading")
+            text = self.corpus_fp.read(char_count)
+            if len(text) < char_count:
+                print("Consumed all of the corpus.")
+                # Raise error when all sequences are read.
+                if not self.repeat:
+                    raise StopIteration()
+                print("Rewinding")
+                # Or, reset current tokens and move to the beginning of the corpus.
+                self.corpus_fp.seek(0)
+                continue
+            self.tmp_buffer = self.vocab.encode(text)
+            # time.sleep(0.000001)
     
     def fetch(self, batch: Optional[int] = None) -> Dict[str, torch.Tensor]:
         if batch is None:
