@@ -52,10 +52,12 @@ class TokenizedCorpus(Dataset):
         
     def _read_n_tokens(self, n: int) -> List[int]:
         if (self.buffer_pointer + n) >= len(self.buffer):
+            print("Asking for data")
             while self.read_event.is_set(): time.sleep(0.0001)
             self.buffer = self.tmp_buffer
             self.buffer_pointer = 0
             self.read_event.set()
+            print("Got continuing")
             
         res = self.buffer[self.buffer_pointer : self.buffer_pointer + n]
         self.buffer_pointer += n
@@ -79,6 +81,7 @@ class TokenizedCorpus(Dataset):
         while True:
             self.read_event.clear()
             self.read_event.wait(60)
+            print("Reading")
             text = self.corpus_fp.read(char_count)
             if len(text) < char_count:
                 print("Consumed all of the corpus.")
@@ -89,7 +92,9 @@ class TokenizedCorpus(Dataset):
                 # Or, reset current tokens and move to the beginning of the corpus.
                 self.corpus_fp.seek(0)
                 continue
+            print("Read")
             self.tmp_buffer = self.vocab.encode(text)
+            print("Indexed")
             # time.sleep(0.000001)
     
     def fetch(self, batch: Optional[int] = None) -> Dict[str, torch.Tensor]:
