@@ -3,6 +3,7 @@ import threading
 import time
 from gpt2.data import Dataset, VocabYTTM, VocabSP
 from typing import Dict, Any, List, Optional, Union
+import multiprocessing as mp
 
 class TokenizedCorpus(Dataset):
     def __init__(self,
@@ -19,12 +20,15 @@ class TokenizedCorpus(Dataset):
         self.tmp_buffer = ""
         
         self.refill = True
-        self.refill_lock = threading.Lock()
-        self.read_event = threading.Event()
-        self.t = threading.Thread(target=self._fill_buffer_in_bg)
-        self.t.setDaemon(True)
-        self.t.start()
-        self.read_event.set()
+        p = mp.Process(target=self._fill_buffer_mp)
+        p.start()
+        
+        # self.refill_lock = threading.Lock()
+        # self.read_event = threading.Event()
+        # self.t = threading.Thread(target=self._fill_buffer_in_bg)
+        # self.t.setDaemon(True)
+        # self.t.start()
+        # self.read_event.set()
 
     def skip(self, count: int):
         for _ in range(count):
@@ -53,10 +57,15 @@ class TokenizedCorpus(Dataset):
     def _read_n_tokens(self, n: int) -> List[int]:
         if (self.buffer_pointer + n) >= len(self.buffer):
             print("Asking for data")
-            while self.read_event.is_set(): time.sleep(0.0001)
+            while self.refill: time.sleep(0.00001)
             self.buffer = self.tmp_buffer
             self.buffer_pointer = 0
-            self.read_event.set()
+            p = mp.Process(target=self._fill_buffer_mp)
+            p.start()
+            # while self.read_event.is_set(): time.sleep(0.0001)
+            # self.buffer = self.tmp_buffer
+            # self.buffer_pointer = 0
+            # self.read_event.set()
             print("Got continuing")
             
         res = self.buffer[self.buffer_pointer : self.buffer_pointer + n]
@@ -76,25 +85,43 @@ class TokenizedCorpus(Dataset):
         #         if count >= n:
         #             return [int(idx) for idx in text.split()]
         #     text += char
+        
+    def _fill_buffer_mp(self, char_count: int = 2097152):
+        print("Reading")
+        text = self.corpus_fp.read(char_count)
+        if len(text) < char_count:
+            print("Consumed all of the corpus.")
+            # Raise error when all sequences are read.
+            if not self.repeat:
+                raise StopIteration()
+            print("Rewinding")
+            # Or, reset current tokens and move to the beginning of the corpus.
+            self.corpus_fp.seek(0)
+            self._fill_buffer_mp()
+        print("Read")
+        self.tmp_buffer = self.vocab.encode(text)
+        print("Indexed")
+        self.refill = False
+        # time.sleep(0.000001)
           
-    def _fill_buffer_in_bg(self, char_count: int = 2097152):
-        while True:
-            self.read_event.clear()
-            self.read_event.wait(60)
-            print("Reading")
-            text = self.corpus_fp.read(char_count)
-            if len(text) < char_count:
-                print("Consumed all of the corpus.")
-                # Raise error when all sequences are read.
-                if not self.repeat:
-                    raise StopIteration()
-                print("Rewinding")
-                # Or, reset current tokens and move to the beginning of the corpus.
-                self.corpus_fp.seek(0)
-                continue
-            print("Read")
-            self.tmp_buffer = self.vocab.encode(text)
-            print("Indexed")
+    # def _fill_buffer_in_bg(self, char_count: int = 2097152):
+    #     while True:
+    #         self.read_event.clear()
+    #         self.read_event.wait(60)
+    #         print("Reading")
+    #         text = self.corpus_fp.read(char_count)
+    #         if len(text) < char_count:
+    #             print("Consumed all of the corpus.")
+    #             # Raise error when all sequences are read.
+    #             if not self.repeat:
+    #                 raise StopIteration()
+    #             print("Rewinding")
+    #             # Or, reset current tokens and move to the beginning of the corpus.
+    #             self.corpus_fp.seek(0)
+    #             continue
+    #         print("Read")
+    #         self.tmp_buffer = self.vocab.encode(text)
+    #         print("Indexed")
             # time.sleep(0.000001)
     
     def fetch(self, batch: Optional[int] = None) -> Dict[str, torch.Tensor]:
