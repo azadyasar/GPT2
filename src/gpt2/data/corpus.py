@@ -4,6 +4,7 @@ import time
 from gpt2.data import Dataset, VocabYTTM, VocabSP
 from typing import Dict, Any, List, Optional, Union
 import multiprocessing as mp
+from multiprocessing import Value, Array
 
 class TokenizedCorpus(Dataset):
     def __init__(self,
@@ -17,9 +18,9 @@ class TokenizedCorpus(Dataset):
         self.repeat = repeat
         self.buffer = []
         self.buffer_pointer = 0
-        self.tmp_buffer = ""
         
-        self.refill = True
+        self.tmp_buffer = Array('i', [])
+        self.refill = Value('b', True)
         p = mp.Process(target=self._fill_buffer_mp)
         p.start()
         
@@ -57,8 +58,11 @@ class TokenizedCorpus(Dataset):
     def _read_n_tokens(self, n: int) -> List[int]:
         if (self.buffer_pointer + n) >= len(self.buffer):
             print("Asking for data")
-            while self.refill: time.sleep(0.00001)
-            self.buffer = self.tmp_buffer
+            self.refill.acquire()
+            while self.refill.value is True: time.sleep(0.00001)
+            self.refill.value = True
+            self.refill.release()
+            self.buffer = self.tmp_buffer.value
             self.buffer_pointer = 0
             p = mp.Process(target=self._fill_buffer_mp)
             p.start()
@@ -101,7 +105,9 @@ class TokenizedCorpus(Dataset):
         print("Read")
         self.tmp_buffer = self.vocab.encode(text)
         print("Indexed")
-        self.refill = False
+        self.refill.acquire()
+        self.refill.value = False
+        self.refill.release()
         # time.sleep(0.000001)
           
     # def _fill_buffer_in_bg(self, char_count: int = 2097152):
