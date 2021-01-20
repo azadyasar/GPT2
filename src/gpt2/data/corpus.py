@@ -47,27 +47,31 @@ class TokenizedCorpus(Dataset):
         if (self.buffer_pointer + n) >= len(self.buffer):
             self.buffer = self.tmp_buffer
             self._read_in_background()
-        count = 0
-        text = ""
-        while True:
-            if self.buffer_pointer >= len(self.buffer):
-                self._fill_buffer()
-                text = ""
-                count = 0
-            char = self.buffer[self.buffer_pointer]
-            self.buffer_pointer += 1
-            if char.isspace():
-                count += 1
-                if count >= n:
-                    return [int(idx) for idx in text.split()]
-            text += char
+            
+        res = self.buffer[self.buffer_pointer : self.buffer_pointer + n]
+        self.buffer_pointer += n
+        return res
+        # count = 0
+        # text = ""
+        # while True:
+        #     if self.buffer_pointer >= len(self.buffer):
+        #         self._fill_buffer()
+        #         text = ""
+        #         count = 0
+        #     char = self.buffer[self.buffer_pointer]
+        #     self.buffer_pointer += 1
+        #     if char.isspace():
+        #         count += 1
+        #         if count >= n:
+        #             return [int(idx) for idx in text.split()]
+        #     text += char
             
     def _read_in_background(self):
         self.corpus_reader_thread = threading.Thread(target=self._fill_buffer)
         self.corpus_reader_thread.setDaemon(True)
         self.corpus_reader_thread.start()
         
-    def _fill_buffer(self, char_count: int = 8388608):
+    def _fill_buffer(self, char_count: int = 1048576):
         text = self.corpus_fp.read(char_count)
         if len(text) < char_count:
             print("Consumed all of the corpus.")
