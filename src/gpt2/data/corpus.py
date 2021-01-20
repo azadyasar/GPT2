@@ -62,7 +62,7 @@ class TokenizedCorpus(Dataset):
             while self.refill.value is True: time.sleep(0.00001)
             self.refill.value = True
             self.refill.release()
-            self.buffer = self.tmp_buffer.value
+            self.buffer = self.tmp_buffer[:]
             self.buffer_pointer = 0
             p = mp.Process(target=self._fill_buffer_mp)
             p.start()
