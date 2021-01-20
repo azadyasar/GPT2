@@ -1,4 +1,5 @@
 import torch
+import threading
 from gpt2.data import Dataset, VocabYTTM, VocabSP
 from typing import Dict, Any, List, Optional, Union
 
@@ -15,6 +16,8 @@ class TokenizedCorpus(Dataset):
         self.repeat = repeat
         self.buffer = ""
         self.buffer_pointer = 0
+        self.tmp_buffer = ""
+        self._read_in_background()
 
     def skip(self, count: int):
         for _ in range(count):
@@ -42,7 +45,8 @@ class TokenizedCorpus(Dataset):
         
     def _read_n_tokens(self, n: int) -> List[int]:
         if (self.buffer_pointer + n) >= len(self.buffer):
-            self._fill_buffer()
+            self.buffer = self.tmp_buffer
+            self._read_in_background()
         count = 0
         text = ""
         while True:
@@ -57,19 +61,25 @@ class TokenizedCorpus(Dataset):
                 if count >= n:
                     return [int(idx) for idx in text.split()]
             text += char
+            
+    def _read_in_background(self):
+        self.corpus_reader_thread = threading.Thread(target=self._fill_buffer)
+        self.corpus_reader_thread.setDaemon(True)
+        self.corpus_reader_thread.start()
         
-    def _fill_buffer(self, char_count: int = 1048576):
-        self.buffer = self.corpus_fp.read(char_count)
-        self.buffer_pointer = 0
-        if len(self.buffer) < char_count:
+    def _fill_buffer(self, char_count: int = 8388608):
+        text = self.corpus_fp.read(char_count)
+        if len(text) < char_count:
             print("Consumed all of the corpus.")
             # Raise error when all sequences are read.
             if not self.repeat:
                 raise StopIteration()
-            
+            print("Rewinding")
             # Or, reset current tokens and move to the beginning of the corpus.
             self.corpus_fp.seek(0)
             self._fill_buffer()
+        
+        self.tmp_buffer = self.vocab.encode(text)
     
     def fetch(self, batch: Optional[int] = None) -> Dict[str, torch.Tensor]:
         if batch is None:
