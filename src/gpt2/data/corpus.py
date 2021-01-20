@@ -64,8 +64,8 @@ class TokenizedCorpus(Dataset):
             self.refill.release()
             
             self.tmp_buffer.acquire()
-            self.buffer = self.tmp_buffer.copy()
             self.buffer_pointer = 0
+            self.buffer = [self.tmp_buffer[i] for i in range(len(self.tmp_buffer))]
             print("buffer len = ", len(self.buffer))
             p = mp.Process(target=self._fill_buffer_mp)
             p.start()
