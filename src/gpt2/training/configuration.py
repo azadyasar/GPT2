@@ -5,6 +5,7 @@ class TrainConfig(object):
                  batch_eval: int,
                  total_steps: int,
                  eval_steps: int,
+                 eval_size: int,
                  save_steps: int,
                  save_model_path: str,
                  save_checkpoint_path: str,
@@ -16,6 +17,7 @@ class TrainConfig(object):
         self.batch_eval = batch_eval
         self.total_steps = total_steps
         self.eval_steps = eval_steps
+        self.eval_size = eval_size
         self.save_steps = save_steps
         self.save_model_path = save_model_path
         self.save_checkpoint_path = save_checkpoint_path

@@ -122,8 +122,10 @@ class Trainer(object):
 
             if (step + 1) % self.config.eval_steps == 0:
                 learning_rate = optimizer.param_groups[0]['lr']
-                recorder.record(
-                    self._eval_step(rank, eval_dataset, model), scope='eval')
+                # Evaluate on `eval_size` batches
+                for eval_step in self.config.eval_size:
+                    recorder.record(
+                        self._eval_step(rank, eval_dataset, model), scope='eval')
                 recorder.stamp(step, learning_rate)
 
                 if rank == 0:

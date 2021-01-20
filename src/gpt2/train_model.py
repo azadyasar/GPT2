@@ -87,10 +87,9 @@ def train_gpt2_model(args: argparse.Namespace):
     config = TrainConfig(
         batch_train=args.batch_train, batch_eval=args.batch_eval,
         total_steps=args.total_steps, eval_steps=args.eval_steps,
-        save_steps=args.save_steps, save_model_path=args.save_model_path,
-        save_checkpoint_path=args.save_checkpoint_path,
-        description='Train GPT-2 model',
-        log_format='train/loss: {train_loss:.4f}, eval/loss: {eval_loss:.4f}, lr: {lr:.5f}',
+        eval_size=args.eval_size, save_steps=args.save_steps,
+        save_model_path=args.save_model_path, save_checkpoint_path=args.save_checkpoint_path,
+        description='Train GPT-2 model', log_format='train/loss: {train_loss:.4f}, eval/loss: {eval_loss:.4f}, lr: {lr:.5f}',
         use_amp=args.use_amp, gpus=args.gpus)
 
     Trainer(spec, config).train(from_checkpoint=args.from_checkpoint,
@@ -138,6 +137,8 @@ def add_subparser(subparsers: argparse._SubParsersAction):
                        help='number of total training steps')
     group.add_argument('--eval_steps', default=500, type=int,
                        help='period to evaluate model and record metrics')
+    group.add_argument('--eval_size', default=10, type=int,
+                       help="number of batches to use when evaluating")
     group.add_argument('--save_steps', default=1000, type=int,
                        help='period to save training state to checkpoint')
 
