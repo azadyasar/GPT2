@@ -20,8 +20,9 @@ class TokenizedCorpus(Dataset):
         self.buffer = []
         self.buffer_pointer = 0
         
-        self.tmp_buffer = RawArray('i', [-5]*512*512)
-        self.q = Queue()
+        self.exit_signal = -999
+        self.tmp_buffer = RawArray('i', [self.exit_signal]*512*512)
+        # self.q = Queue()
         self.refill = Value('b', True)
         p = mp.Process(target=self._fill_buffer_mp)
         p.start()
@@ -59,20 +60,20 @@ class TokenizedCorpus(Dataset):
         
     def _read_n_tokens(self, n: int) -> List[int]:
         if (self.buffer_pointer + n) >= len(self.buffer):
-            print("Asking for data")
+            # print("Asking for data")
             self.refill.acquire()
             while self.refill.value is True: time.sleep(0.00001)
             self.refill.value = True
             self.buffer_pointer = 0
-            print("tmp_buffer len = ", len(self.tmp_buffer))
+            # print("tmp_buffer len = ", len(self.tmp_buffer))
             self.buffer = []
             for idx in self.tmp_buffer:
-                if idx == -5:
-                    print("saw exit signal")
+                if idx == self.exit_signal:
+                    # print("saw exit signal")
                     break
                 self.buffer.append(idx)
             # self.buffer = [idx for idx in self.tmp_buffer if idx != -5]
-            print("buffer len = ", len(self.buffer))
+            # print("buffer len = ", len(self.buffer))
             # print("q len = ", len(self.q))
             # self.buffer.clear()
             # while True:
@@ -88,7 +89,7 @@ class TokenizedCorpus(Dataset):
             # self.buffer = self.tmp_buffer
             # self.buffer_pointer = 0
             # self.read_event.set()
-            print("Got continuing")
+            # print("Got continuing")
         
         res = self.buffer[self.buffer_pointer : self.buffer_pointer + n]
         self.buffer_pointer += n
@@ -109,7 +110,7 @@ class TokenizedCorpus(Dataset):
         #     text += char
         
     def _fill_buffer_mp(self, char_count: int = 1048576):
-        print("Reading")
+        # print("Reading")
         self.refill.acquire()
         try:
             text = self.corpus_fp.read(char_count)
@@ -125,13 +126,13 @@ class TokenizedCorpus(Dataset):
             # Or, reset current tokens and move to the beginning of the corpus.
             self.corpus_fp.seek(0)
             self._fill_buffer_mp()
-        print("Read")
+        # print("Read")
         
         for i, token_idx in enumerate(self.vocab.encode(text)):
             # self.q.put(token_idx)
             self.tmp_buffer[i] = token_idx
         # self.q.put(-999)
-        print("Indexed len = ", len(self.tmp_buffer))
+        # print("Indexed len = ", len(self.tmp_buffer))
         # print("Indexed len = ", len(self.q))
         self.refill.value = False
         self.refill.release()
