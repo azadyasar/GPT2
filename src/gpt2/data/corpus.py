@@ -65,9 +65,10 @@ class TokenizedCorpus(Dataset):
             self.refill.value = True
             self.buffer_pointer = 0
             print("tmp_buffer len = ", len(self.tmp_buffer))
-            self.buffer.clear()
+            self.buffer = []
             for idx in self.tmp_buffer:
                 if idx == -5:
+                    print("saw exit signal")
                     break
                 self.buffer.append(idx)
             # self.buffer = [idx for idx in self.tmp_buffer if idx != -5]
