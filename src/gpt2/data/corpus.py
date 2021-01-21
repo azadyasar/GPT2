@@ -5,6 +5,7 @@ from gpt2.data import Dataset, VocabYTTM, VocabSP
 from typing import Dict, Any, List, Optional, Union
 import multiprocessing as mp
 from multiprocessing import Value, Array
+from multiprocessing.sharedctypes import RawArray
 
 class TokenizedCorpus(Dataset):
     def __init__(self,
@@ -19,7 +20,7 @@ class TokenizedCorpus(Dataset):
         self.buffer = []
         self.buffer_pointer = 0
         
-        self.tmp_buffer = Array('i', [])
+        self.tmp_buffer = RawArray('i', [-5]*1024*1024)
         self.refill = Value('b', True)
         p = mp.Process(target=self._fill_buffer_mp)
         p.start()
@@ -61,10 +62,9 @@ class TokenizedCorpus(Dataset):
             self.refill.acquire()
             while self.refill.value is True: time.sleep(0.00001)
             self.refill.value = True
-        
             self.buffer_pointer = 0
             print("tmp_buffer len = ", len(self.tmp_buffer))
-            self.buffer = [self.tmp_buffer[i] for i in range(len(self.tmp_buffer))]
+            self.buffer = [idx for idx in self.tmp_buffer if idx != -5]
             print("buffer len = ", len(self.buffer))
             p = mp.Process(target=self._fill_buffer_mp)
             p.start()
@@ -107,7 +107,9 @@ class TokenizedCorpus(Dataset):
             self.corpus_fp.seek(0)
             self._fill_buffer_mp()
         print("Read")
-        self.tmp_buffer = Array('i', self.vocab.encode(text))
+        
+        for i, token_idx in enumerate(self.vocab.encode(text)):
+            self.tmp_buffer[i] = token_idx
         print("Indexed len = ", len(self.tmp_buffer))
         self.refill.value = False
         self.refill.release()
