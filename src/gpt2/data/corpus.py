@@ -122,7 +122,7 @@ class TokenizedCorpus(Dataset):
             self.tmp_buffer[i] = token_idx
         # self.q.put(-999)
         print("Indexed len = ", len(self.tmp_buffer))
-        print("Indexed len = ", len(self.q))
+        # print("Indexed len = ", len(self.q))
         self.refill.value = False
         self.refill.release()
         # time.sleep(0.000001)
