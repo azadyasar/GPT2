@@ -18,7 +18,7 @@ except ModuleNotFoundError:
     pass
 
 import warnings
-# warnings.filterwarnings(action='ignore')
+warnings.filterwarnings(action='ignore')
 
 
 class Trainer(object):
