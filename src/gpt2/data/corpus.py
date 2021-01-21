@@ -85,6 +85,8 @@ class TokenizedCorpus(Dataset):
             self.refill.release()
             p = mp.Process(target=self._fill_buffer_mp)
             p.start()
+            if (self.buffer_pointer + n) >= len(self.buffer):
+                return self._read_n_tokens(n)
             # while self.read_event.is_set(): time.sleep(0.0001)
             # self.buffer = self.tmp_buffer
             # self.buffer_pointer = 0
