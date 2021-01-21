@@ -20,7 +20,7 @@ class TokenizedCorpus(Dataset):
         self.buffer = []
         self.buffer_pointer = 0
         
-        self.tmp_buffer = RawArray('i', [-5]*1024*1024)
+        self.tmp_buffer = RawArray('i', [-5]*512*512)
         self.q = Queue()
         self.refill = Value('b', True)
         p = mp.Process(target=self._fill_buffer_mp)
@@ -65,7 +65,11 @@ class TokenizedCorpus(Dataset):
             self.refill.value = True
             self.buffer_pointer = 0
             print("tmp_buffer len = ", len(self.tmp_buffer))
-            self.buffer = [idx for idx in self.tmp_buffer if idx != -5]
+            for idx in self.tmp_buffer:
+                if idx == -5:
+                    break
+                self.buffer.append(idx)
+            # self.buffer = [idx for idx in self.tmp_buffer if idx != -5]
             print("buffer len = ", len(self.buffer))
             # print("q len = ", len(self.q))
             # self.buffer.clear()
@@ -83,7 +87,7 @@ class TokenizedCorpus(Dataset):
             # self.buffer_pointer = 0
             # self.read_event.set()
             print("Got continuing")
-            
+        
         res = self.buffer[self.buffer_pointer : self.buffer_pointer + n]
         self.buffer_pointer += n
         return res
@@ -102,7 +106,7 @@ class TokenizedCorpus(Dataset):
         #             return [int(idx) for idx in text.split()]
         #     text += char
         
-    def _fill_buffer_mp(self, char_count: int = 2097152):
+    def _fill_buffer_mp(self, char_count: int = 1048576):
         print("Reading")
         self.refill.acquire()
         text = self.corpus_fp.read(char_count)
