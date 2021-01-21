@@ -21,7 +21,7 @@ class TokenizedCorpus(Dataset):
         self.buffer_pointer = 0
         
         self.exit_signal = -999
-        self.tmp_buffer = RawArray('i', [self.exit_signal]*512*512)
+        self.tmp_buffer = RawArray('i', [self.exit_signal]*512*512*8)
         # self.q = Queue()
         self.refill = Value('b', True)
         p = mp.Process(target=self._fill_buffer_mp)
@@ -62,8 +62,8 @@ class TokenizedCorpus(Dataset):
         if (self.buffer_pointer + n) >= len(self.buffer):
             # print("Asking for data")
             self.refill.acquire()
-            while self.refill.value is True: time.sleep(0.00001)
-            self.refill.value = True
+            # while self.refill.value is True: time.sleep(0.00001)
+            # self.refill.value = True
             self.buffer_pointer = 0
             # print("tmp_buffer len = ", len(self.tmp_buffer))
             self.buffer = []
@@ -117,6 +117,7 @@ class TokenizedCorpus(Dataset):
         except:
             self.refill.release()
             self._fill_buffer_mp()
+            return
         if len(text) < char_count:
             print("Consumed all of the corpus.")
             # Raise error when all sequences are read.
