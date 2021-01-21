@@ -122,6 +122,7 @@ class Trainer(object):
 
             if (step + 1) % self.config.eval_steps == 0:
                 learning_rate = optimizer.param_groups[0]['lr']
+                torch.cuda.empty_cache()
                 # Evaluate on `eval_size` batches
                 for eval_step in range(self.config.eval_size):
                     recorder.record(
