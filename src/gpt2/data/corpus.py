@@ -109,7 +109,11 @@ class TokenizedCorpus(Dataset):
     def _fill_buffer_mp(self, char_count: int = 1048576):
         print("Reading")
         self.refill.acquire()
-        text = self.corpus_fp.read(char_count)
+        try:
+            text = self.corpus_fp.read(char_count)
+        except:
+            self.refill.release()
+            self._fill_buffer_mp()
         if len(text) < char_count:
             print("Consumed all of the corpus.")
             # Raise error when all sequences are read.
