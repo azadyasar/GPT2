@@ -32,6 +32,14 @@ class TokenizedCorpus(Dataset):
         while True:
             # Read subword-tokenized sequence from corpus.
             line = self.corpus_fp.readline()
+            if not line or len(line) == 0:
+                print(f"Consumed all of the corpus: {self.corpus_fp.name}")
+                if not self.repeat:
+                    raise StopIteration()
+                
+                print("Rewinding")
+                self.corpus_fp.seek(0)
+                return self._fetch_one()
             indices = self.vocab.encode(line)
             if len(indices) + 2 > self.seq_len:
                 indices = indices[:self.seq_len - 2]
