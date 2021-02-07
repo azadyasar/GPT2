@@ -6,7 +6,7 @@ import torch.nn as nn
 import torch.optim as optim
 from gpt2.utils import fusing
 from gpt2.modeling import Transformer
-from gpt2.data import Dataset, VocabSP, VocabYTTM, TokenizedCorpus
+from gpt2.data import Dataset, VocabSP, VocabYTTM, TokenizedCorpus, MTCorpus
 from gpt2.training import TrainConfig, TrainingSpec, Trainer
 from typing import Tuple, Iterator, Dict
 
@@ -15,7 +15,8 @@ class GPT2TrainingSpec(TrainingSpec):
     def __init__(self, train_corpus: str, eval_corpus: str, vocab_path: str,
                  seq_len: int, layers: int, heads: int, dims: int, rate: int,
                  dropout: float, base_lr: float, wd_rate: float,
-                 total_steps: int, use_grad_ckpt: bool, is_sentencepiece: bool = True):
+                 total_steps: int, use_grad_ckpt: bool, is_sentencepiece: bool = True,
+                 finetune_nmt: bool = False):
         self.train_corpus = train_corpus
         self.eval_corpus = eval_corpus
         self.vocab_path = vocab_path
@@ -30,6 +31,7 @@ class GPT2TrainingSpec(TrainingSpec):
         self.total_steps = total_steps
         self.use_grad_ckpt = use_grad_ckpt
         self.is_sentencepiece = is_sentencepiece
+        self.finetune_nmt = finetune_nmt
 
     def initialize(self):
         if self.is_sentencepiece:
@@ -40,12 +42,22 @@ class GPT2TrainingSpec(TrainingSpec):
                                              reduction='mean')
 
     def prepare_datasets(self) -> Tuple[Dataset, Dataset]:
-        train_dataset = TokenizedCorpus(corpus_path=self.train_corpus,
-                                        vocab=self.vocab,
-                                        seq_len=self.seq_len)
-        eval_dataset = TokenizedCorpus(corpus_path=self.eval_corpus,
+        if not self.finetune_nmt:
+            train_dataset = TokenizedCorpus(corpus_path=self.train_corpus,
+                                            vocab=self.vocab,
+                                            seq_len=self.seq_len)
+            eval_dataset = TokenizedCorpus(corpus_path=self.eval_corpus,
                                        vocab=self.vocab,
                                        seq_len=self.seq_len)
+        else:
+            train_dataset = MTCorpus(corpus_path=self.train_corpus,
+                                            vocab=self.vocab,
+                                            seq_len=self.seq_len)
+            eval_dataset = MTCorpus(corpus_path=self.eval_corpus,
+                                       vocab=self.vocab,
+                                       seq_len=self.seq_len)
+            
+        
         return train_dataset, eval_dataset
 
     def construct_model(self) -> nn.Module:
@@ -153,6 +165,8 @@ def add_subparser(subparsers: argparse._SubParsersAction):
                        help='initialize parameters from pretrained model')
 
     group = parser.add_argument_group('Extensions')
+    group.add_argument('--ft_nmt', action='store_true',
+                       help='fine-tune for neural machine translation')
     group.add_argument('--use_amp', action='store_true',
                        help='use automatic mixed-precision in training')
     group.add_argument('--use_grad_ckpt', action='store_true',

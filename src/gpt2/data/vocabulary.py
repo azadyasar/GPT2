@@ -11,10 +11,12 @@ class VocabSP(object):
                  pad_token: str = '<pad>'):
         self.tokenizer = spm.SentencePieceProcessor()
         self.tokenizer.LoadFromFile(tokenizer_path)
+        self.sep_id = 4
         self.pad_token = self.tokenizer.IdToPiece(self.tokenizer.pad_id())
         self.unk_token = self.tokenizer.IdToPiece(self.tokenizer.unk_id())
         self.bos_token = self.tokenizer.IdToPiece(self.tokenizer.bos_id())
         self.eos_token = self.tokenizer.IdToPiece(self.tokenizer.eos_id())
+        self.sep_token = self.tokenizer.IdToPiece(self.sep_id)
 
         self.vocab = {self.tokenizer.IdToPiece(id): id 
                       for id in range(self.tokenizer.piece_size())}
@@ -56,6 +58,10 @@ class VocabSP(object):
     @property
     def pad_idx(self) -> int:
         return self.vocab[self.pad_token]
+
+    @property
+    def sep_idx(self) -> int:
+        return self.vocab[self.sep_token]
 
 
 class VocabYTTM(object):
