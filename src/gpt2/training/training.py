@@ -135,21 +135,21 @@ class Trainer(object):
 
             # Save training states to checkpoint file.
             if rank == 0 and (step + 1) % self.config.save_steps == 0:
-                ckpt = {'step': step,
-                        'recorder': recorder,
-                        'model': model.state_dict(),
-                        'optimizer': optimizer.state_dict(),
-                        'scheduler': scheduler.state_dict(),
-                        'train_dataset': train_dataset.where(),
-                        'eval_dataset': eval_dataset.where()}
+                # ckpt = {'step': step,
+                #         'recorder': recorder,
+                #         'model': model.state_dict(),
+                #         'optimizer': optimizer.state_dict(),
+                #         'scheduler': scheduler.state_dict(),
+                #         'train_dataset': train_dataset.where(),
+                #         'eval_dataset': eval_dataset.where()}
 
-                if self.config.use_amp:
-                    ckpt['amp'] = amp.state_dict()
+                # if self.config.use_amp:
+                #     ckpt['amp'] = amp.state_dict()
 
-                torch.save(ckpt, self.config.save_checkpoint_path)
+                # torch.save(ckpt, self.config.save_checkpoint_path)
                 # Because the checkpoint data allocates quite a lot of GPU
                 # memories, we need to free the memories explicitly.
-                del ckpt
+                # del ckpt
                 torch.cuda.empty_cache()
                 
                 torch.save({'model': model.cpu().state_dict(),
