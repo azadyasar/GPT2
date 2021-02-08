@@ -39,7 +39,7 @@ class MTCorpus(Dataset):
                 self.corpus_fp.seek(0)
                 return self._fetch_one()
             
-            sentences = line.split('\t')
+            sentences = line.lower().split('\t')
             src_sent, trg_sent = sentences[0], sentences[1]
             src_sent_indices = self.vocab.encode(src_sent)
             src_sent_indices = [self.vocab.bos_idx] + src_sent_indices + [self.vocab.sep_idx]
