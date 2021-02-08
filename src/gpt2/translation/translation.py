@@ -51,4 +51,4 @@ class Translator(object):
         return logits[-1, :].softmax(-1), past
     
     def _sample_from_top_p(self, probs: torch.Tensor) -> int:
-        return probs.argmax(1).item()
+        return probs.argmax().item()
