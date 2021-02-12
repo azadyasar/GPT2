@@ -28,6 +28,11 @@ class VocabSP(object):
     def decode_from_ids(self, token_ids: List[int]) -> str:
         return self.tokenizer.Decode(token_ids)
         
+    def encode_as_pieces(self, text: str) -> List[int]:
+        return self.tokenizer.EncodeAsPieces(text.lower())
+    
+    def id_to_piece(self, id: int) -> str:
+        return self.tokenizer.IdToPiece(id)
 
     def __getitem__(self, idx_or_token: Union[int, str]) -> Union[str, int]:
         if isinstance(idx_or_token, str):

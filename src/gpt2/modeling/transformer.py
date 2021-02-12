@@ -45,7 +45,20 @@ class TransformerLayer(nn.Module):
         x = x + self.ff(self.ln_ff(x))
 
         return x if self.training else (x, past)
+    
+    def forward_attn(self,
+                x: torch.Tensor,
+                past: Optional[Past] = None,
+                mask: Optional[torch.Tensor] = None,
+                ) -> Union[torch.Tensor, Tuple[torch.Tensor, Past, torch.Tensor]]:
+        # Layer normalizations are performed before the layers respectively.
+        a = self.ln_attn(x)
+        a, past, attention = self.attn.forward_attn(a, a, a, past, mask)
 
+        x = x + a
+        x = x + self.ff(self.ln_ff(x))
+
+        return x if self.training else (x, past), attention
 
 class Transformer(nn.Module):
     """
@@ -115,3 +128,38 @@ class Transformer(nn.Module):
         x = self.token_embedding(x, transposed=True)
 
         return x if self.training else (x, present)
+    
+    def forward_attn(self,
+                x: torch.Tensor,
+                past: Optional[List[Past]] = None,
+                use_grad_ckpt: bool = False
+                ) -> Union[torch.Tensor, Tuple[torch.Tensor, List[Past]]]:
+        
+        offset = past[0][0].size(-2) if past is not None else 0
+
+        # Create masking tensor.
+        mask = self.pad_masking(x, offset)
+        if not self.bidirectional:
+            mask = mask + self.future_masking(x, offset)
+
+        # Use token embedding and positional embedding layers.
+        x = self.token_embedding(x) + self.positional_embedding(x, offset)
+        x = self.dropout_embedding(x)
+
+        # Apply transformer layers sequentially.
+        present = []
+        for i, transformer in enumerate(self.transformers):
+            if self.training and use_grad_ckpt:
+                transformer = partial(torch.utils.checkpoint.checkpoint,
+                                      transformer)
+
+            x, attn = transformer.forward_attn(x, past[i] if past is not None else None, mask)
+
+            if not self.training:
+                present.append(x[1])
+                x = x[0]
+
+        x = self.ln_head(x)
+        x = self.token_embedding(x, transposed=True)
+
+        return x if self.training else x, present, attn

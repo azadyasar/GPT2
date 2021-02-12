@@ -35,6 +35,19 @@ class BaseAttention(nn.Module):
 
         return torch.matmul(x, v)
 
+    def forward_attn(self,
+                q: torch.Tensor,
+                k: torch.Tensor,
+                v: torch.Tensor,
+                mask: Optional[torch.Tensor] = None) -> Tuple[torch.Tensor, torch.Tensor]:
+        x = torch.matmul(q, k.transpose(-2, -1)) / math.sqrt(k.size(-1))
+
+        attn = x.clone()
+        if mask is not None:
+            attn = x + mask.type_as(attn) * attn.new_tensor(-1e4)
+        x = self.dropout(attn.softmax(-1))
+        
+        return torch.matmul(x, v), attn
 
 class MultiHeadAttention(BaseAttention):
     """
@@ -74,6 +87,27 @@ class MultiHeadAttention(BaseAttention):
                 .transpose(-3, -2)
                 .contiguous()
                 .view(q.size()[:-3] + (q.size(-2), v.size(-1) * self.heads)))
+    
+    def forward_attn(self,
+                q: torch.Tensor,
+                k: torch.Tensor,
+                v: torch.Tensor,
+                mask: Optional[torch.Tensor] = None) -> Tuple[torch.Tensor, torch.Tensor]:
+        # Split the tensors to multi-heads.
+        q = q.view(q.size()[:-1] + (self.heads, q.size(-1) // self.heads))
+        k = k.view(k.size()[:-1] + (self.heads, k.size(-1) // self.heads))
+        v = v.view(v.size()[:-1] + (self.heads, v.size(-1) // self.heads))
+
+        q = q.transpose(-3, -2)
+        k = k.transpose(-3, -2)
+        v = v.transpose(-3, -2)
+
+        if mask is not None:
+            mask = mask.unsqueeze(-3)
+
+        # Calculate multi-headed attentions and merge them into one.
+        output, a =  super().forward_attn(q, k, v, mask)
+        return output.transpose(-3, -2).contiguous().view(q.size()[:-3] + (q.size(-2), v.size(-1) * self.heads)), a
 
 
 class AttentionLayer(nn.Module):
@@ -114,3 +148,21 @@ class AttentionLayer(nn.Module):
 
         x = self.linear(self.attn(q, k, v, mask))
         return x, (k, v)
+    
+    def forward_attn(self,
+                q: torch.Tensor,
+                k: torch.Tensor,
+                v: torch.Tensor,
+                past: Optional[Past] = None,
+                mask: Optional[torch.Tensor] = None
+                ) -> Tuple[torch.Tensor, Past, torch.Tensor]:
+        q, k, v = self.proj_q(q), self.proj_k(k), self.proj_v(v)
+
+        # Reuse attention keys and values by concatenating to the current ones.
+        if past is not None:
+            k = torch.cat((past[0], k), dim=-2)
+            v = torch.cat((past[1], v), dim=-2)
+
+        x, a = self.attn.forward_attn(q, k, v, mask)
+        x = self.linear(x)
+        return x, (k, v), a

@@ -3,7 +3,8 @@ from gpt2 import (train_model,
                   evaluate_model,
                   generate_sentences,
                   visualize_metrics,
-                  translate_sentence)
+                  translate_sentence,
+                  visualize_translation)
 
 if __name__ == '__main__':
   parser = argparse.ArgumentParser(
@@ -16,6 +17,6 @@ if __name__ == '__main__':
   generate_sentences.add_subparser(subparsers)
   visualize_metrics.add_subparser(subparsers)
   translate_sentence.add_subparser(subparsers)
-  
+  visualize_translation.add_subparser(subparsers)
   args = parser.parse_args()
   args.func(args)
