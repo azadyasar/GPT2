@@ -69,7 +69,7 @@ def display_attention(sentence, translation, attention, n_heads=8, n_rows=4, n_c
 
     # plt.tight_layout()
     # fig.subplots_adjust(hspace=0.25, wspace=0.25)
-    plt.savefig(''.join([str(tr) for tr in translation[:10]]) + ".png")
+    plt.savefig(str(random() * 1000) + ".png")
     # plt.show()
     
 def translate_and_viz(args: argparse.Namespace):
